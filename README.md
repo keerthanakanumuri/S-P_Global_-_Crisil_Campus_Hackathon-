@@ -2,7 +2,7 @@
 ### S&P Global & Crisil Campus Hackathon 2026
 
 **Candidate Name:** Keerthana Kanumuri  
-**College / Campus:** [Your College Name]  
+**College / Campus:** VIT AP UNIVERSITY 
 **Demo Video Link:** [YouTube Unlisted — add after recording]  
 **Slide Deck:** [`docs/presentation.pdf`](docs/presentation.pdf) *(upload PDF before submission)*  
 
