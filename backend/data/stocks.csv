@@ -1,0 +1,16 @@
+ticker,name,sector,weight
+AAPL,Apple,Technology,0.0667
+MSFT,Microsoft,Technology,0.0667
+NVDA,NVIDIA,Technology,0.0667
+AMZN,Amazon,Consumer,0.0667
+GOOGL,Alphabet,Technology,0.0667
+META,Meta,Technology,0.0667
+TSLA,Tesla,Automotive,0.0667
+JPM,JPMorgan,Financials,0.0667
+V,Visa,Financials,0.0667
+MA,Mastercard,Financials,0.0667
+WMT,Walmart,Consumer,0.0667
+XOM,Exxon Mobil,Energy,0.0667
+JNJ,Johnson & Johnson,Healthcare,0.0667
+PG,Procter & Gamble,Consumer,0.0667
+HD,Home Depot,Consumer,0.0667

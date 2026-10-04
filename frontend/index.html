@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinRisk AI — Real-Time Financial Risk Intelligence</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { bg: '#0a0f1e', card: '#0d1525', border: '#1e3a5f', hover: '#111c30' },
+            accent: { cyan: '#00d4ff', green: '#00ff88', red: '#ff4444', orange: '#ff8c00', yellow: '#ffd700' }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #0a0f1e; color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0d1525; }
+    ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00d4ff; }
+
+    /* Cards */
+    .card { background: #0d1525; border: 1px solid #1e3a5f; border-radius: 12px; padding: 16px; }
+
+    /* Risk badges */
+    .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; }
+    .badge-critical { background:#450a0a; color:#f87171; border:1px solid rgba(239,68,68,.3); }
+    .badge-high     { background:#431407; color:#fb923c; border:1px solid rgba(251,146,60,.3); }
+    .badge-medium   { background:#422006; color:#fbbf24; border:1px solid rgba(251,191,36,.3); }
+    .badge-low      { background:#052e16; color:#4ade80; border:1px solid rgba(74,222,128,.3); }
+
+    /* Action badges */
+    .action-increase { color:#4ade80; font-weight:700; }
+    .action-reduce   { color:#f87171; font-weight:700; }
+    .action-hold     { color:#fbbf24; font-weight:600; }
+
+    /* Buttons */
+    .btn-primary   { background:#00d4ff; color:#0a0f1e; font-weight:700; padding:10px 20px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:background .2s; }
+    .btn-primary:hover { background:#38bdf8; }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-secondary { background:#162038; color:#00d4ff; font-weight:600; padding:8px 16px; border-radius:8px; border:1px solid rgba(0,212,255,.35); cursor:pointer; transition:background .2s; }
+    .btn-secondary:hover { background:#1e3a5f; }
+    .btn-secondary:disabled { opacity:.5; cursor:not-allowed; }
+
+    /* Filter pills */
+    .pill { padding:3px 12px; border-radius:9999px; border:1px solid #1e3a5f; font-size:11px; cursor:pointer; color:#94a3b8; transition:all .15s; background:transparent; }
+    .pill.active { background:#00d4ff; color:#0a0f1e; border-color:#00d4ff; font-weight:700; }
+    .pill:hover:not(.active) { border-color:rgba(0,212,255,.4); }
+
+    /* Progress bar */
+    .bar-track { background:#162038; border-radius:9999px; overflow:hidden; }
+    .bar-fill  { height:100%; border-radius:9999px; transition:width .5s ease; }
+
+    /* Table */
+    table { width:100%; border-collapse:collapse; }
+    th { text-align:left; font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:.07em; padding:0 12px 8px 0; border-bottom:1px solid #1e3a5f; }
+    td { padding:10px 12px 10px 0; border-bottom:1px solid rgba(30,58,95,.4); font-size:13px; vertical-align:middle; }
+    tr:hover td { background:#111c30; }
+    tr:last-child td { border-bottom:none; }
+
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { width:16px; height:16px; border:2px solid rgba(0,212,255,.3); border-top-color:#00d4ff; border-radius:50%; animation:spin .7s linear infinite; }
+
+    /* Pulse */
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .pulse { animation:pulse 1.5s ease-in-out infinite; }
+
+    /* Modal */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); backdrop-filter:blur(4px); z-index:50; display:flex; align-items:center; justify-content:center; padding:16px; }
+    .modal-box { background:#0d1525; border:1px solid #1e3a5f; border-radius:16px; max-width:480px; width:100%; padding:24px; box-shadow:0 25px 50px rgba(0,0,0,.6); }
+
+    /* Toast */
+    #toast { position:fixed; bottom:24px; right:24px; z-index:100; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; display:none; max-width:320px; }
+    .toast-ok  { background:#052e16; color:#4ade80; border:1px solid rgba(74,222,128,.3); }
+    .toast-err { background:#450a0a; color:#f87171; border:1px solid rgba(239,68,68,.3); }
+    .toast-info{ background:#0c1a2e; color:#00d4ff; border:1px solid rgba(0,212,255,.3); }
+  </style>
+</head>
+
+<body>
+
+<!-- ═══════════════════════════════════ HEADER ═══════════════════════════════════ -->
+<header style="position:sticky;top:0;z-index:40;background:rgba(10,15,30,.95);backdrop-filter:blur(8px);border-bottom:1px solid #1e3a5f;">
+  <div style="max-width:1400px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <!-- Brand -->
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#00d4ff,#2563eb);display:flex;align-items:center;justify-content:center;font-weight:700;color:#0a0f1e;font-size:13px;flex-shrink:0;">FR</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;line-height:1;">FinRisk <span style="color:#00d4ff;">AI</span></div>
+        <div style="font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:.1em;">Real-Time Risk Intelligence</div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div style="display:flex;align-items:center;gap:8px;background:#0d1525;border:1px solid #1e3a5f;border-radius:9999px;padding:6px 14px;">
+      <span id="status-dot" style="width:8px;height:8px;border-radius:50%;background:#fbbf24;flex-shrink:0;"></span>
+      <span id="status-text" style="font-size:12px;font-weight:600;color:#cbd5e1;">IDLE</span>
+      <span id="status-time" style="font-size:10px;color:#475569;"></span>
+    </div>
+
+    <!-- Buttons -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-secondary" id="btn-demo" onclick="loadDemo()">📂 Demo Mode</button>
+      <button class="btn-primary"   id="btn-live" onclick="runLive()">
+        <span>▶</span> Run Live Analysis
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════ MAIN ═════════════════════════════════════ -->
+<main style="max-width:1400px;margin:0 auto;padding:20px;display:flex;flex-direction:column;gap:20px;">
+
+  <!-- KPI CARDS -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;" id="kpi-grid">
+    <div class="card" id="kpi-risk">
+      <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">🎯 Market Risk Score</div>
+      <div class="mono" style="font-size:28px;font-weight:700;color:#fbbf24;" id="kpi-risk-val">—</div>
+      <div style="margin-top:6px;">
+        <div class="bar-track" style="height:6px;">
+          <div class="bar-fill" id="kpi-risk-bar" style="width:0%;background:#fbbf24;"></div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#64748b;margin-top:4px;" id="kpi-risk-label">No data yet</div>
+    </div>
+    <div class="card">
+      <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">📡 Total Signals</div>
+      <div class="mono" style="font-size:28px;font-weight:700;color:#00d4ff;" id="kpi-signals">—</div>
+      <div style="font-size:11px;color:#64748b;margin-top:4px;">processed this session</div>
+    </div>
+    <div class="card">
+      <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">🧠 Avg Sentiment</div>
+      <div class="mono" style="font-size:28px;font-weight:700;" id="kpi-sentiment">—</div>
+      <div style="font-size:11px;color:#64748b;margin-top:4px;" id="kpi-sent-label">—</div>
+    </div>
+    <div class="card">
+      <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">⚠️ High-Risk Events</div>
+      <div class="mono" style="font-size:28px;font-weight:700;color:#fb923c;" id="kpi-highrisk">—</div>
+      <div style="font-size:11px;color:#64748b;margin-top:4px;" id="kpi-critical">—</div>
+    </div>
+    <div class="card">
+      <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">💥 Avg Impact</div>
+      <div class="mono" style="font-size:28px;font-weight:700;color:#a78bfa;" id="kpi-impact">—</div>
+      <div style="font-size:11px;color:#64748b;margin-top:4px;">out of 10.0</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="card">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+        <span style="color:#00d4ff;">📊</span> Sentiment Distribution
+      </div>
+      <div style="position:relative;height:220px;">
+        <canvas id="chart-sentiment"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+        <span style="color:#00d4ff;">🗂️</span> Event Classification
+      </div>
+      <div style="position:relative;height:220px;">
+        <canvas id="chart-events"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIGNALS TABLE -->
+  <div class="card">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:14px;font-weight:700;">⚡ Live Risk Signals</span>
+        <span id="signals-count" style="background:#162038;color:#94a3b8;padding:2px 10px;border-radius:9999px;font-size:11px;">0 signals</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <button class="pill active" onclick="filterSignals('All',this)">All</button>
+        <button class="pill" onclick="filterSignals('Critical',this)">Critical</button>
+        <button class="pill" onclick="filterSignals('High',this)">High</button>
+        <button class="pill" onclick="filterSignals('Medium',this)">Medium</button>
+        <button class="pill" onclick="filterSignals('Low',this)">Low</button>
+        <select id="sort-signals" onchange="renderSignals()" style="font-size:11px;background:#111c30;border:1px solid #1e3a5f;color:#94a3b8;border-radius:6px;padding:4px 8px;">
+          <option value="impact">Sort: Impact ↓</option>
+          <option value="sentiment">Sort: Sentiment</option>
+          <option value="ticker">Sort: Ticker A-Z</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th><th>Event</th><th>Sentiment</th><th>Impact</th><th>Risk</th><th>Source</th><th>Detail</th>
+          </tr>
+        </thead>
+        <tbody id="signals-tbody">
+          <tr><td colspan="7" style="text-align:center;padding:40px;color:#475569;">No signals yet — click Run Live Analysis or Demo Mode</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PORTFOLIO REBALANCING -->
+  <div class="card">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:14px;font-weight:700;">📈 Tactical Index Rebalancing</span>
+        <span style="background:#162038;color:#94a3b8;padding:2px 10px;border-radius:9999px;font-size:11px;">15 stocks</span>
+      </div>
+      <button class="btn-secondary" id="btn-rebalance" onclick="runRebalance()" disabled>
+        ⚖️ Rebalance Portfolio
+      </button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th><th>Company</th><th>Sector</th>
+            <th>Base Weight</th><th>New Weight</th><th>Change</th>
+            <th>Sentiment</th><th>Impact</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="portfolio-tbody">
+          <tr><td colspan="9" style="text-align:center;padding:40px;color:#475569;">Load signals first, then click Rebalance Portfolio</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Weight chart -->
+    <div style="margin-top:20px;">
+      <div style="font-size:12px;color:#64748b;margin-bottom:10px;">Portfolio Weight Comparison (Base vs Rebalanced)</div>
+      <div style="position:relative;height:200px;">
+        <canvas id="chart-weights"></canvas>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════ MODAL ════════════════════════════════════ -->
+<div class="modal-overlay" id="modal" style="display:none;" onclick="closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span class="mono" style="font-size:22px;font-weight:700;color:#00d4ff;" id="modal-ticker"></span>
+          <span id="modal-badge"></span>
+        </div>
+        <div style="font-size:12px;color:#94a3b8;" id="modal-company"></div>
+      </div>
+      <button onclick="document.getElementById('modal').style.display='none'"
+        style="color:#475569;background:none;border:none;cursor:pointer;font-size:20px;line-height:1;">✕</button>
+    </div>
+    <p style="font-size:13px;color:#cbd5e1;line-height:1.6;border-left:2px solid rgba(0,212,255,.3);padding-left:12px;margin-bottom:16px;" id="modal-title"></p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" id="modal-stats"></div>
+    <div style="background:#111c30;border-radius:8px;padding:12px;margin-bottom:16px;">
+      <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">Why this signal matters</div>
+      <ul style="font-size:12px;color:#cbd5e1;line-height:1.8;list-style:none;padding:0;margin:0;" id="modal-reasons"></ul>
+    </div>
+    <div style="background:#111c30;border-radius:8px;padding:12px;">
+      <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">Rebalancing Recommendation</div>
+      <div style="font-size:13px;font-weight:700;" id="modal-action"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ TOAST ════════════════════════════════════ -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════ SCRIPT ═══════════════════════════════════ -->
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const API = 'http://127.0.0.1:8000'
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let allSignals   = []
+let portfolio    = []
+let activeFilter = 'All'
+let chartSentiment = null
+let chartEvents    = null
+let chartWeights   = null
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id)
+
+function toast(msg, type = 'info') {
+  const el = $('toast')
+  el.textContent = msg
+  el.className = `toast-${type}`
+  el.style.display = 'block'
+  setTimeout(() => el.style.display = 'none', 3500)
+}
+
+function setLoading(on) {
+  const live = $('btn-live')
+  const demo = $('btn-demo')
+  if (on) {
+    live.disabled = true
+    demo.disabled = true
+    live.innerHTML = '<div class="spinner"></div> Analysing…'
+  } else {
+    live.disabled = false
+    demo.disabled = false
+    live.innerHTML = '<span>▶</span> Run Live Analysis'
+  }
+}
+
+function setStatus(mode, time) {
+  const dot  = $('status-dot')
+  const text = $('status-text')
+  const ts   = $('status-time')
+  if (mode === 'live') {
+    dot.style.background = '#4ade80'
+    dot.classList.add('pulse')
+    text.textContent = 'LIVE'
+    text.style.color = '#4ade80'
+  } else if (mode === 'demo') {
+    dot.style.background = '#fbbf24'
+    dot.classList.remove('pulse')
+    text.textContent = 'DEMO'
+    text.style.color = '#fbbf24'
+  } else {
+    dot.style.background = '#fbbf24'
+    dot.classList.remove('pulse')
+    text.textContent = 'IDLE'
+    text.style.color = '#cbd5e1'
+  }
+  ts.textContent = time || ''
+}
+
+function riskColor(level) {
+  return level === 'Critical' ? '#f87171' :
+         level === 'High'     ? '#fb923c' :
+         level === 'Medium'   ? '#fbbf24' : '#4ade80'
+}
+
+function sentColor(score) {
+  return score > 0.05 ? '#4ade80' : score < -0.05 ? '#f87171' : '#94a3b8'
+}
+
+function eventColor(ev) {
+  const m = { 'Geopolitical':'#f87171','Macroeconomic':'#fb923c','Credit Event':'#fbbf24',
+              'Merger/Acquisition':'#60a5fa','Product Launch':'#4ade80',
+              'Earnings':'#00d4ff','General Market':'#94a3b8' }
+  return m[ev] || '#94a3b8'
+}
+
+// ── KPI update ────────────────────────────────────────────────────────────────
+function updateKPIs(summary) {
+  const score = summary.market_risk_score ?? 0
+  const scoreColor = score >= 8 ? '#f87171' : score >= 6 ? '#fb923c' : score >= 4 ? '#fbbf24' : '#4ade80'
+  $('kpi-risk-val').textContent  = score.toFixed(1)
+  $('kpi-risk-val').style.color  = scoreColor
+  $('kpi-risk-bar').style.width  = `${(score / 10) * 100}%`
+  $('kpi-risk-bar').style.background = scoreColor
+  $('kpi-risk-label').textContent =
+    score >= 8 ? 'Critical — Extreme stress' :
+    score >= 6 ? 'High — Significant risk' :
+    score >= 4 ? 'Medium — Moderate risk'  : 'Low — Calm conditions'
+
+  $('kpi-signals').textContent   = summary.signal_count ?? 0
+  const sent = summary.avg_sentiment ?? 0
+  $('kpi-sentiment').textContent = (sent >= 0 ? '+' : '') + sent.toFixed(3)
+  $('kpi-sentiment').style.color = sentColor(sent)
+  $('kpi-sent-label').textContent = sent > 0.05 ? '▲ Positive trend' : sent < -0.05 ? '▼ Negative trend' : '— Neutral'
+  $('kpi-highrisk').textContent  = summary.high_risk_count ?? 0
+  $('kpi-critical').textContent  = `${summary.critical_count ?? 0} critical`
+  $('kpi-impact').textContent    = (summary.avg_impact ?? 0).toFixed(1)
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+const CHART_DEFAULTS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+}
+
+function buildSentimentChart(signals) {
+  const pos = signals.filter(s => s.sentiment_score >  0.05).length
+  const neg = signals.filter(s => s.sentiment_score < -0.05).length
+  const neu = signals.filter(s => Math.abs(s.sentiment_score) <= 0.05).length
+  const ctx = $('chart-sentiment').getContext('2d')
+  if (chartSentiment) chartSentiment.destroy()
+  chartSentiment = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Positive', 'Negative', 'Neutral'],
+      datasets: [{ data: [pos, neg, neu],
+        backgroundColor: ['rgba(74,222,128,.8)','rgba(248,113,113,.8)','rgba(148,163,184,.4)'],
+        borderColor:     ['#4ade80','#f87171','#94a3b8'],
+        borderWidth: 1.5 }]
+    },
+    options: { ...CHART_DEFAULTS, cutout: '62%' }
+  })
+}
+
+function buildEventChart(signals) {
+  const counts = {}
+  signals.forEach(s => { counts[s.event_type] = (counts[s.event_type] || 0) + 1 })
+  const labels = Object.keys(counts)
+  const data   = labels.map(l => counts[l])
+  const colors = labels.map(l => eventColor(l))
+  const ctx = $('chart-events').getContext('2d')
+  if (chartEvents) chartEvents.destroy()
+  chartEvents = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'Signals', data, backgroundColor: colors.map(c => c + 'cc'),
+        borderColor: colors, borderWidth: 1.5, borderRadius: 5 }]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      indexAxis: 'y',
+      plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(30,58,95,.5)' } },
+        y: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  })
+}
+
+function buildWeightChart(portfolio) {
+  const labels   = portfolio.map(s => s.ticker)
+  const base     = portfolio.map(s => parseFloat((s.base_weight * 100).toFixed(2)))
+  const newW     = portfolio.map(s => parseFloat((s.new_weight * 100).toFixed(2)))
+  const ctx = $('chart-weights').getContext('2d')
+  if (chartWeights) chartWeights.destroy()
+  chartWeights = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Base Weight %',   data: base, backgroundColor: 'rgba(148,163,184,.4)', borderColor:'#94a3b8', borderWidth:1, borderRadius:3 },
+        { label: 'New Weight %',    data: newW, backgroundColor: newW.map((v,i) => v > base[i] ? 'rgba(74,222,128,.7)' : v < base[i] ? 'rgba(248,113,113,.7)' : 'rgba(251,191,36,.6)'),
+          borderColor: newW.map((v,i) => v > base[i] ? '#4ade80' : v < base[i] ? '#f87171' : '#fbbf24'), borderWidth:1, borderRadius:3 }
+      ]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      scales: {
+        x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(30,58,95,.4)' } },
+        y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(30,58,95,.4)' } }
+      }
+    }
+  })
+}
+
+// ── Signals table ─────────────────────────────────────────────────────────────
+function filterSignals(level, btn) {
+  activeFilter = level
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'))
+  btn.classList.add('active')
+  renderSignals()
+}
+
+function renderSignals() {
+  const sort   = $('sort-signals').value
+  let filtered = activeFilter === 'All' ? [...allSignals]
+                 : allSignals.filter(s => s.risk_level === activeFilter)
+
+  filtered.sort((a, b) => {
+    if (sort === 'impact')    return b.impact_score - a.impact_score
+    if (sort === 'sentiment') return Math.abs(b.sentiment_score) - Math.abs(a.sentiment_score)
+    return a.ticker.localeCompare(b.ticker)
+  })
+
+  $('signals-count').textContent = `${filtered.length} signal${filtered.length !== 1 ? 's' : ''}`
+
+  if (!filtered.length) {
+    $('signals-tbody').innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:#475569;">No signals match this filter.</td></tr>`
+    return
+  }
+
+  $('signals-tbody').innerHTML = filtered.map((s, idx) => {
+    const sc = s.sentiment_score
+    const pct = Math.abs(sc) * 100
+    const sColor = sentColor(sc)
+    const badgeClass = `badge badge-${s.risk_level.toLowerCase()}`
+    const srcIcon = s.source === 'Financial News' ? '📰' : '💬'
+
+    return `<tr>
+      <td>
+        <div class="mono" style="font-weight:700;color:#00d4ff;font-size:14px;">${s.ticker}</div>
+        <div style="font-size:10px;color:#64748b;">${s.company}</div>
+      </td>
+      <td><span style="font-size:12px;font-weight:600;color:${eventColor(s.event_type)};">${s.event_type}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="mono" style="font-size:11px;width:52px;text-align:right;color:${sColor};">${sc >= 0 ? '+' : ''}${sc.toFixed(3)}</span>
+          <div class="bar-track" style="width:60px;height:5px;">
+            <div class="bar-fill" style="width:${pct}%;background:${sColor};"></div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="bar-track" style="width:48px;height:5px;">
+            <div class="bar-fill" style="width:${(s.impact_score/10)*100}%;background:#fb923c;"></div>
+          </div>
+          <span class="mono" style="font-size:11px;color:#fb923c;">${s.impact_score}</span>
+        </div>
+      </td>
+      <td><span class="${badgeClass}">${s.risk_level}</span></td>
+      <td style="font-size:11px;color:#64748b;">${srcIcon} ${s.source === 'Financial News' ? 'News' : 'Social'}</td>
+      <td><button onclick="openModal(${idx})" style="font-size:11px;color:#00d4ff;background:none;border:none;cursor:pointer;">Explain ↗</button></td>
+    </tr>`
+  }).join('')
+}
+
+// ── Portfolio table ───────────────────────────────────────────────────────────
+function renderPortfolio(data) {
+  portfolio = data
+  $('btn-rebalance').disabled = false
+
+  $('portfolio-tbody').innerHTML = data.map(s => {
+    const bw = (s.base_weight * 100).toFixed(2)
+    const nw = (s.new_weight  * 100).toFixed(2)
+    const chg = s.weight_change_pct ?? 0
+    const chgColor = chg > 0 ? '#4ade80' : chg < 0 ? '#f87171' : '#fbbf24'
+    const chgSign  = chg > 0 ? '▲' : chg < 0 ? '▼' : '—'
+    const actionClass = `action-${s.action.toLowerCase()}`
+    const sc = (s.sentiment_score ?? 0)
+    const imp = (s.impact_score ?? 0)
+
+    return `<tr>
+      <td><div class="mono" style="font-weight:700;color:#00d4ff;">${s.ticker}</div></td>
+      <td style="font-size:12px;color:#cbd5e1;">${s.name}</td>
+      <td style="font-size:11px;color:#64748b;">${s.sector}</td>
+      <td class="mono" style="font-size:12px;color:#94a3b8;">${bw}%</td>
+      <td class="mono" style="font-size:13px;font-weight:700;color:${chgColor};">${nw}%</td>
+      <td class="mono" style="font-size:12px;color:${chgColor};">${chgSign} ${Math.abs(chg).toFixed(2)}%</td>
+      <td class="mono" style="font-size:11px;color:${sentColor(sc)};">${sc >= 0 ? '+' : ''}${sc.toFixed(3)}</td>
+      <td style="font-size:11px;color:#fb923c;" class="mono">${imp.toFixed(1)}</td>
+      <td class="${actionClass}">${s.action}</td>
+    </tr>`
+  }).join('')
+
+  buildWeightChart(data)
+}
+
+// ── Detail modal ─────────────────────────────────────────────────────────────
+function openModal(idx) {
+  const sort   = $('sort-signals').value
+  let filtered = activeFilter === 'All' ? [...allSignals]
+                 : allSignals.filter(s => s.risk_level === activeFilter)
+  filtered.sort((a, b) => {
+    if (sort === 'impact')    return b.impact_score - a.impact_score
+    if (sort === 'sentiment') return Math.abs(b.sentiment_score) - Math.abs(a.sentiment_score)
+    return a.ticker.localeCompare(b.ticker)
+  })
+  const s = filtered[idx]
+  if (!s) return
+
+  $('modal-ticker').textContent  = s.ticker
+  $('modal-badge').className     = `badge badge-${s.risk_level.toLowerCase()}`
+  $('modal-badge').textContent   = s.risk_level
+  $('modal-company').textContent = s.company
+  $('modal-title').textContent   = s.title
+
+  const stats = [
+    { label: 'Sentiment Score', val: (s.sentiment_score >= 0 ? '+' : '') + s.sentiment_score, color: sentColor(s.sentiment_score) },
+    { label: 'Impact Score',    val: `${s.impact_score} / 10`, color: '#fb923c' },
+    { label: 'Event Type',      val: s.event_type, color: eventColor(s.event_type) },
+    { label: 'Source',          val: s.source, color: '#60a5fa' },
+  ]
+  $('modal-stats').innerHTML = stats.map(st => `
+    <div style="background:#111c30;border-radius:8px;padding:10px;">
+      <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">${st.label}</div>
+      <div style="font-size:13px;font-weight:600;color:${st.color};">${st.val}</div>
+    </div>`).join('')
+
+  const reasons = []
+  if (s.sentiment_score < -0.5) reasons.push('Strong negative financial sentiment detected')
+  if (s.sentiment_score > 0.5)  reasons.push('Strong positive financial sentiment detected')
+  if (s.impact_score >= 8)      reasons.push('Critical event severity — extreme market impact expected')
+  if (s.impact_score >= 6 && s.impact_score < 8) reasons.push('High event severity — significant market impact')
+  if (['Geopolitical','Credit Event'].includes(s.event_type)) reasons.push(`${s.event_type} events carry elevated systemic risk`)
+  if (s.source === 'Social Media')   reasons.push('Social media source — lower confidence weight (0.6×) applied')
+  if (s.source === 'Financial News') reasons.push('Financial news source — full confidence weight (1.0×) applied')
+  if (!reasons.length) reasons.push('Moderate signal — within normal market variation')
+  $('modal-reasons').innerHTML = reasons.map(r => `<li>• ${r}</li>`).join('')
+
+  // Find portfolio action
+  const p = portfolio.find(x => x.ticker === s.ticker)
+  if (p) {
+    const bw = (p.base_weight * 100).toFixed(2)
+    const nw = (p.new_weight  * 100).toFixed(2)
+    const actionClass = `action-${p.action.toLowerCase()}`
+    $('modal-action').innerHTML = `<span class="${actionClass}">${p.action}</span> &nbsp; <span style="font-size:12px;color:#94a3b8;">${bw}% → ${nw}%</span>`
+  } else {
+    $('modal-action').innerHTML = `<span style="color:#94a3b8;">Run rebalance to see portfolio action</span>`
+  }
+
+  $('modal').style.display = 'flex'
+}
+
+function closeModal(e) {
+  if (e.target === $('modal')) $('modal').style.display = 'none'
+}
+
+// ── API calls ─────────────────────────────────────────────────────────────────
+async function computeSummary(signals) {
+  if (!signals.length) return { signal_count:0, avg_sentiment:0, avg_impact:0, high_risk_count:0, critical_count:0, market_risk_score:0, event_distribution:{} }
+  const sentiments = signals.map(s => s.sentiment_score)
+  const impacts    = signals.map(s => s.impact_score)
+  const avg_sentiment = sentiments.reduce((a,b)=>a+b,0) / sentiments.length
+  const avg_impact    = impacts.reduce((a,b)=>a+b,0) / impacts.length
+  const high_risk_count = signals.filter(s => ['High','Critical'].includes(s.risk_level)).length
+  const critical_count  = signals.filter(s => s.risk_level === 'Critical').length
+  const market_risk = Math.min(10, avg_impact * 0.5 + Math.abs(avg_sentiment) * 3 + (high_risk_count / signals.length) * 3)
+  const event_distribution = {}
+  signals.forEach(s => { event_distribution[s.event_type] = (event_distribution[s.event_type]||0)+1 })
+  return { signal_count: signals.length, avg_sentiment: Math.round(avg_sentiment*10000)/10000, avg_impact: Math.round(avg_impact*100)/100, high_risk_count, critical_count, market_risk_score: Math.round(market_risk*10)/10, event_distribution }
+}
+
+async function applySignals(signals, mode) {
+  allSignals = signals
+  const summary = await computeSummary(signals)
+  updateKPIs(summary)
+  buildSentimentChart(signals)
+  buildEventChart(signals)
+  renderSignals()
+  $('btn-rebalance').disabled = false
+  const now = new Date().toLocaleTimeString()
+  setStatus(mode, now)
+  toast(`Loaded ${signals.length} signals successfully`, 'ok')
+}
+
+async function runLive() {
+  setLoading(true)
+  try {
+    // Step 1: ingest
+    const r1 = await fetch(`${API}/ingest`)
+    if (!r1.ok) throw new Error(`/ingest returned ${r1.status}`)
+    const d1 = await r1.json()
+    await applySignals(d1.signals || [], 'live')
+  } catch (err) {
+    toast(`Live ingestion failed: ${err.message}. Loading demo instead…`, 'err')
+    await loadDemo()
+  } finally {
+    setLoading(false)
+  }
+}
+
+async function loadDemo() {
+  setLoading(true)
+  try {
+    const r = await fetch(`${API}/demo`)
+    if (!r.ok) throw new Error(`/demo returned ${r.status}`)
+    const d = await r.json()
+    await applySignals(d.signals || [], 'demo')
+  } catch (err) {
+    // Last resort: fetch the local JSON file directly
+    try {
+      const r2 = await fetch('../data/demo_signals.json')
+      const signals = await r2.json()
+      await applySignals(signals, 'demo')
+    } catch (err2) {
+      toast(`Could not load demo data: ${err2.message}`, 'err')
+    }
+  } finally {
+    setLoading(false)
+  }
+}
+
+async function runRebalance() {
+  if (!allSignals.length) { toast('Load signals first', 'err'); return }
+  $('btn-rebalance').disabled = true
+  $('btn-rebalance').textContent = '⏳ Rebalancing…'
+  try {
+    const r = await fetch(`${API}/rebalance`)
+    if (!r.ok) throw new Error(`/rebalance returned ${r.status}`)
+    const data = await r.json()
+    renderPortfolio(data)
+    toast('Portfolio rebalanced successfully', 'ok')
+  } catch (err) {
+    toast(`Rebalance failed: ${err.message}`, 'err')
+  } finally {
+    $('btn-rebalance').disabled = false
+    $('btn-rebalance').innerHTML = '⚖️ Rebalance Portfolio'
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+// Render empty charts as placeholders
+window.addEventListener('DOMContentLoaded', () => {
+  buildSentimentChart([])
+  buildEventChart([])
+})
+</script>
+</body>
+</html>

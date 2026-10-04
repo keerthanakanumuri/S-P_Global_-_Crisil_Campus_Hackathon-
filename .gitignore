@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Node
+node_modules/
+dist/
+.npm
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# SQLite
+*.db
+*.sqlite3
+
+# Models cache (large)
+models/
+*.bin
+*.pt
+
+# Misc
+.env.local
+.env.production
