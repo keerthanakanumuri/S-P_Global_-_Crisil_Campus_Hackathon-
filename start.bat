@@ -5,11 +5,12 @@ color 0B
 echo.
 echo  =====================================================
 echo   FinRisk AI — Real-Time Financial Risk Intelligence
+echo   S^&P Global ^& Crisil Campus Hackathon 2026
 echo  =====================================================
 echo.
 
 :: Move into backend folder
-cd /d "%~dp0backend"
+cd /d "%~dp0src\backend"
 
 :: Create venv if it doesn't exist
 if not exist "venv\" (
@@ -25,15 +26,15 @@ echo [2/3] Activating virtual environment...
 call venv\Scripts\activate.bat
 
 :: Install / upgrade dependencies
-echo [3/3] Installing dependencies (this may take a moment on first run)...
+echo [3/3] Installing dependencies (first run may take a few minutes)...
 pip install -r requirements.txt --quiet
 
 echo.
 echo  -------------------------------------------------------
-echo   Backend starting at  http://127.0.0.1:8000
-echo   API docs at          http://127.0.0.1:8000/docs
+echo   Backend running at   http://127.0.0.1:8000
+echo   Swagger API docs at  http://127.0.0.1:8000/docs
 echo.
-echo   Frontend: open  frontend\index.html  in your browser
+echo   Frontend: open  src\frontend\index.html  in browser
 echo  -------------------------------------------------------
 echo.
 

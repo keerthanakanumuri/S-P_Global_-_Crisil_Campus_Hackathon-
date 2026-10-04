@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" width="900" height="620" font-family="Inter, Arial, sans-serif">
+  <!-- Background -->
+  <rect width="900" height="620" fill="#0a0f1e" rx="12"/>
+
+  <!-- Title -->
+  <text x="450" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="#00d4ff">FinRisk AI — System Architecture</text>
+  <text x="450" y="58" text-anchor="middle" font-size="11" fill="#64748b">Real-Time Financial Risk Intelligence &amp; Tactical Index Rebalancing</text>
+
+  <!-- ── Layer labels ── -->
+  <text x="18" y="100" font-size="10" fill="#475569" font-weight="600" transform="rotate(-90,18,100)">DATA SOURCES</text>
+  <text x="18" y="220" font-size="10" fill="#475569" font-weight="600" transform="rotate(-90,18,220)">INGESTION</text>
+  <text x="18" y="330" font-size="10" fill="#475569" font-weight="600" transform="rotate(-90,18,330)">NLP ENGINE</text>
+  <text x="18" y="455" font-size="10" fill="#475569" font-weight="600" transform="rotate(-90,18,455)">REBALANCING</text>
+  <text x="18" y="565" font-size="10" fill="#475569" font-weight="600" transform="rotate(-90,18,565)">DASHBOARD</text>
+
+  <!-- ════════════ ROW 1: Data Sources ════════════ -->
+  <!-- Google News RSS -->
+  <rect x="80" y="72" width="180" height="52" rx="8" fill="#0d1525" stroke="#1e3a5f" stroke-width="1.5"/>
+  <text x="170" y="94" text-anchor="middle" font-size="13" font-weight="700" fill="#00d4ff">📰 Google News RSS</text>
+  <text x="170" y="112" text-anchor="middle" font-size="10" fill="#94a3b8">Financial headlines per ticker</text>
+
+  <!-- Reddit API -->
+  <rect x="320" y="72" width="180" height="52" rx="8" fill="#0d1525" stroke="#1e3a5f" stroke-width="1.5"/>
+  <text x="410" y="94" text-anchor="middle" font-size="13" font-weight="700" fill="#00d4ff">💬 Reddit JSON API</text>
+  <text x="410" y="112" text-anchor="middle" font-size="10" fill="#94a3b8">Social sentiment per ticker</text>
+
+  <!-- 15 Stocks -->
+  <rect x="560" y="72" width="180" height="52" rx="8" fill="#0d1525" stroke="#1e3a5f" stroke-width="1.5"/>
+  <text x="650" y="94" text-anchor="middle" font-size="13" font-weight="700" fill="#00d4ff">📊 15-Stock Mock Index</text>
+  <text x="650" y="112" text-anchor="middle" font-size="10" fill="#94a3b8">S&amp;P 100 subset (stocks.csv)</text>
+
+  <!-- Arrows down to ingestion -->
+  <line x1="170" y1="124" x2="170" y2="155" stroke="#1e3a5f" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="410" y1="124" x2="410" y2="155" stroke="#1e3a5f" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="650" y1="124" x2="650" y2="430" stroke="#1e3a5f" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+  <!-- ════════════ ROW 2: Ingestion ════════════ -->
+  <rect x="140" y="155" width="330" height="50" rx="8" fill="#0d1525" stroke="#00d4ff" stroke-width="1.5"/>
+  <text x="305" y="176" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">Data Ingestion Layer</text>
+  <text x="305" y="194" text-anchor="middle" font-size="10" fill="#94a3b8">ingestion.py · Normalize · Deduplicate · Timestamp</text>
+
+  <!-- Arrow down -->
+  <line x1="305" y1="205" x2="305" y2="235" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+
+  <!-- ════════════ ROW 3: NLP Engine (3 boxes side-by-side) ════════════ -->
+  <!-- Sentiment -->
+  <rect x="80" y="235" width="170" height="70" rx="8" fill="#0d1525" stroke="#4ade80" stroke-width="1.5"/>
+  <text x="165" y="257" text-anchor="middle" font-size="12" font-weight="700" fill="#4ade80">🧠 Sentiment</text>
+  <text x="165" y="273" text-anchor="middle" font-size="10" fill="#94a3b8">FinBERT (ProsusAI)</text>
+  <text x="165" y="288" text-anchor="middle" font-size="10" fill="#94a3b8">Score: −1.0 → +1.0</text>
+  <text x="165" y="298" text-anchor="middle" font-size="9" fill="#64748b">sentiment.py</text>
+
+  <!-- Event Classifier -->
+  <rect x="270" y="235" width="170" height="70" rx="8" fill="#0d1525" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="355" y="257" text-anchor="middle" font-size="12" font-weight="700" fill="#fbbf24">🗂️ Event Classifier</text>
+  <text x="355" y="273" text-anchor="middle" font-size="10" fill="#94a3b8">Keyword-weighted rules</text>
+  <text x="355" y="288" text-anchor="middle" font-size="10" fill="#94a3b8">7 event categories</text>
+  <text x="355" y="298" text-anchor="middle" font-size="9" fill="#64748b">event_classifier.py</text>
+
+  <!-- Impact Score -->
+  <rect x="460" y="235" width="170" height="70" rx="8" fill="#0d1525" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="545" y="257" text-anchor="middle" font-size="12" font-weight="700" fill="#fb923c">💥 Impact Engine</text>
+  <text x="545" y="273" text-anchor="middle" font-size="10" fill="#94a3b8">Magnitude + Event + Keywords</text>
+  <text x="545" y="288" text-anchor="middle" font-size="10" fill="#94a3b8">Score: 1 → 10</text>
+  <text x="545" y="298" text-anchor="middle" font-size="9" fill="#64748b">impact.py</text>
+
+  <!-- fan-out arrows from ingestion to NLP boxes -->
+  <line x1="305" y1="235" x2="165" y2="235" stroke="#00d4ff" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="305" y1="235" x2="545" y2="235" stroke="#00d4ff" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- Converge arrows down to risk aggregation -->
+  <line x1="165" y1="305" x2="305" y2="355" stroke="#1e3a5f" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="355" y1="305" x2="355" y2="355" stroke="#1e3a5f" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="545" y1="305" x2="405" y2="355" stroke="#1e3a5f" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ════════════ ROW 3b: Risk Aggregation ════════════ -->
+  <rect x="140" y="355" width="330" height="60" rx="8" fill="#111c30" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="305" y="378" text-anchor="middle" font-size="13" font-weight="700" fill="#a78bfa">⚡ Risk Signal Aggregation</text>
+  <text x="305" y="394" text-anchor="middle" font-size="10" fill="#94a3b8">Source Confidence × Recency Decay × Sentiment</text>
+  <text x="305" y="407" text-anchor="middle" font-size="9" fill="#64748b">risk_engine.py · Structured JSON output per ticker</text>
+
+  <!-- Arrow down -->
+  <line x1="305" y1="415" x2="305" y2="430" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+
+  <!-- ════════════ ROW 4: Rebalancing ════════════ -->
+  <rect x="100" y="430" width="240" height="60" rx="8" fill="#0d1525" stroke="#00d4ff" stroke-width="1.5"/>
+  <text x="220" y="453" text-anchor="middle" font-size="13" font-weight="700" fill="#00d4ff">⚖️ Rebalancing Engine</text>
+  <text x="220" y="469" text-anchor="middle" font-size="10" fill="#94a3b8">Risk-adjusted weight formula</text>
+  <text x="220" y="481" text-anchor="middle" font-size="9" fill="#64748b">rebalancer.py · INCREASE / HOLD / REDUCE</text>
+
+  <!-- stocks.csv feeds into rebalancer -->
+  <line x1="650" y1="430" x2="340" y2="460" stroke="#1e3a5f" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+
+  <!-- FastAPI box -->
+  <rect x="390" y="430" width="200" height="60" rx="8" fill="#0d1525" stroke="#1e3a5f" stroke-width="1.5"/>
+  <text x="490" y="453" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">🚀 FastAPI REST API</text>
+  <text x="490" y="469" text-anchor="middle" font-size="10" fill="#94a3b8">/demo  /ingest  /signals</text>
+  <text x="490" y="481" text-anchor="middle" font-size="9" fill="#64748b">/rebalance  /summary  (main.py)</text>
+
+  <!-- rebalancer → api -->
+  <line x1="340" y1="460" x2="390" y2="460" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+
+  <!-- Arrows down to dashboard -->
+  <line x1="220" y1="490" x2="305" y2="535" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+  <line x1="490" y1="490" x2="400" y2="535" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+
+  <!-- ════════════ ROW 5: Dashboard ════════════ -->
+  <rect x="130" y="535" width="490" height="58" rx="8" fill="#0d1525" stroke="#00d4ff" stroke-width="2"/>
+  <text x="375" y="558" text-anchor="middle" font-size="13" font-weight="700" fill="#00d4ff">🖥️ Interactive Dashboard</text>
+  <text x="375" y="574" text-anchor="middle" font-size="10" fill="#94a3b8">KPI Cards · Sentiment Chart · Event Chart · Signals Table · Portfolio Rebalancing · Explain Modal</text>
+  <text x="375" y="585" text-anchor="middle" font-size="9" fill="#64748b">src/frontend/index.html · Tailwind CDN + Chart.js CDN · Zero build step</text>
+
+  <!-- ════════════ Legend ════════════ -->
+  <rect x="680" y="240" width="190" height="200" rx="8" fill="#0d1525" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="775" y="260" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff">Legend</text>
+  <line x1="695" y1="275" x2="730" y2="275" stroke="#00d4ff" stroke-width="2"/>
+  <text x="738" y="279" font-size="10" fill="#94a3b8">Primary data flow</text>
+  <line x1="695" y1="295" x2="730" y2="295" stroke="#1e3a5f" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="738" y="299" font-size="10" fill="#94a3b8">Reference data</text>
+  <rect x="695" y="312" width="14" height="14" rx="3" fill="#0d1525" stroke="#4ade80" stroke-width="1.5"/>
+  <text x="716" y="323" font-size="10" fill="#94a3b8">NLP module</text>
+  <rect x="695" y="332" width="14" height="14" rx="3" fill="#0d1525" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="716" y="343" font-size="10" fill="#94a3b8">Classification</text>
+  <rect x="695" y="352" width="14" height="14" rx="3" fill="#0d1525" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="716" y="363" font-size="10" fill="#94a3b8">Impact scoring</text>
+  <rect x="695" y="372" width="14" height="14" rx="3" fill="#0d1525" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="716" y="383" font-size="10" fill="#94a3b8">Aggregation</text>
+  <rect x="695" y="392" width="14" height="14" rx="3" fill="#0d1525" stroke="#00d4ff" stroke-width="2"/>
+  <text x="716" y="403" font-size="10" fill="#94a3b8">Core services</text>
+  <!-- Source confidence note -->
+  <rect x="680" y="450" width="190" height="65" rx="8" fill="#0d1525" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="775" y="468" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">Source Confidence</text>
+  <text x="775" y="484" text-anchor="middle" font-size="10" fill="#94a3b8">Financial News → 1.0×</text>
+  <text x="775" y="498" text-anchor="middle" font-size="10" fill="#94a3b8">Social Media → 0.6×</text>
+  <text x="775" y="512" text-anchor="middle" font-size="9" fill="#64748b">× Recency decay (1.0→0.2)</text>
+
+  <!-- Arrowhead markers -->
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#1e3a5f"/>
+    </marker>
+    <marker id="arr-cyan" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#00d4ff"/>
+    </marker>
+    <marker id="arr-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#a78bfa"/>
+    </marker>
+  </defs>
+</svg>
