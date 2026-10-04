@@ -5,6 +5,7 @@ Sources:
   2. Reddit JSON API (Social Media)
 """
 
+import re
 import feedparser
 import requests
 from datetime import datetime, timezone
@@ -51,7 +52,6 @@ def get_news() -> list[dict]:
                 title = item.get("title", "").strip()
                 summary = item.get("summary", title).strip()
                 # strip HTML tags from summary
-                import re
                 summary = re.sub(r"<[^>]+>", " ", summary)
                 results.append(
                     {

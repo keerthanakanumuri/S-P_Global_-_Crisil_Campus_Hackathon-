@@ -521,7 +521,7 @@ function renderSignals() {
       </td>
       <td><span class="${badgeClass}">${s.risk_level}</span></td>
       <td style="font-size:11px;color:#64748b;">${srcIcon} ${s.source === 'Financial News' ? 'News' : 'Social'}</td>
-      <td><button onclick="openModal(${idx})" style="font-size:11px;color:#00d4ff;background:none;border:none;cursor:pointer;">Explain ↗</button></td>
+      <td><button onclick="openModalByTicker('${s.ticker}','${s.source}','${encodeURIComponent(s.timestamp)}')" style="font-size:11px;color:#00d4ff;background:none;border:none;cursor:pointer;">Explain ↗</button></td>
     </tr>`
   }).join('')
 }
@@ -558,17 +558,16 @@ function renderPortfolio(data) {
 }
 
 // ── Detail modal ─────────────────────────────────────────────────────────────
-function openModal(idx) {
-  const sort   = $('sort-signals').value
-  let filtered = activeFilter === 'All' ? [...allSignals]
-                 : allSignals.filter(s => s.risk_level === activeFilter)
-  filtered.sort((a, b) => {
-    if (sort === 'impact')    return b.impact_score - a.impact_score
-    if (sort === 'sentiment') return Math.abs(b.sentiment_score) - Math.abs(a.sentiment_score)
-    return a.ticker.localeCompare(b.ticker)
-  })
-  const s = filtered[idx]
-  if (!s) return
+function openModalByTicker(ticker, source, tsEncoded) {
+  // Find the exact signal by ticker + source + timestamp (unique enough)
+  const ts = decodeURIComponent(tsEncoded)
+  const s = allSignals.find(x => x.ticker === ticker && x.source === source && x.timestamp === ts)
+         || allSignals.find(x => x.ticker === ticker && x.source === source)
+         || allSignals.find(x => x.ticker === ticker)
+  if (s) openModal(s)
+}
+
+function openModal(s) {
 
   $('modal-ticker').textContent  = s.ticker
   $('modal-badge').className     = `badge badge-${s.risk_level.toLowerCase()}`
